@@ -1,0 +1,28 @@
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+    match /samples/{sampleId}/{allPaths=**} {
+      
+      // Helper: Check if user is a member of the lab the sample is shared with
+      function isLabMember(labId) {
+        return request.auth != null &&
+          firestore.exists(/databases/(default)/documents/labs/$(labId)) &&
+          request.auth.uid in firestore.get(/databases/(default)/documents/labs/$(labId)).data.get('members', []);
+      }
+
+      // Allow read if user owns the Firestore record OR if it is shared with their Lab
+      allow read: if request.auth != null && 
+        firestore.exists(/databases/(default)/documents/samples/$(sampleId)) &&
+        (
+          firestore.get(/databases/(default)/documents/samples/$(sampleId)).data.get('userId', '') == request.auth.uid ||
+          (firestore.get(/databases/(default)/documents/samples/$(sampleId)).data.get('sharedWithLabId', '') != '' && 
+           isLabMember(firestore.get(/databases/(default)/documents/samples/$(sampleId)).data.sharedWithLabId))
+        );
+
+      // Only the owner of the Firestore record can upload or delete files
+      allow write: if request.auth != null && 
+        firestore.exists(/databases/(default)/documents/samples/$(sampleId)) &&
+        firestore.get(/databases/(default)/documents/samples/$(sampleId)).data.get('userId', '') == request.auth.uid;
+    }
+  }
+}

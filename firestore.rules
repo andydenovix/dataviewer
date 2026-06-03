@@ -1,0 +1,53 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Helper: Check if user is a member of a specific lab
+    function isLabMember(labId) {
+      return request.auth != null && 
+        exists(/databases/$(database)/documents/labs/$(labId)) && 
+        request.auth.uid in get(/databases/$(database)/documents/labs/$(labId)).data.get('members', []);
+    }
+
+    // Samples Collection
+    match /samples/{sampleId} {
+      // Allow read if user owns the sample OR if it's shared with a lab they belong to
+      allow read: if request.auth != null && (
+        (resource.data.get('userId', '') == request.auth.uid) ||
+        (resource.data.get('sharedWithLabId', '') != '' && isLabMember(resource.data.sharedWithLabId))
+      );
+      
+      // Only the owner can create, update, or delete
+      allow create: if request.auth != null && request.resource.data.get('userId', '') == request.auth.uid;
+      allow update, delete: if request.auth != null && resource.data.get('userId', '') == request.auth.uid;
+    }
+
+    // Labs Collection
+    match /labs/{labId} {
+      allow read: if request.auth != null && request.auth.uid in resource.data.get('members', []);
+      allow create: if request.auth != null;
+      allow update: if request.auth != null; 
+      allow delete: if request.auth != null && resource.data.get('creatorId', '') == request.auth.uid;
+    }
+
+    // Projects Collection
+    match /projects/{projectId} {
+      allow read, update, delete: if request.auth != null && resource.data.get('userId', '') == request.auth.uid;
+      allow create: if request.auth != null && request.resource.data.userId == request.auth.uid;
+    }
+
+    // Notifications Collection
+    match /notifications/{notificationId} {
+      // Users can only read and manage their own notifications
+      allow read, update, delete: if request.auth != null && resource.data.get('userId', '') == request.auth.uid;
+      // Notifications are created by the system/colleagues during sharing
+      allow create: if request.auth != null;
+    }
+
+    // Comments Collection
+    match /comments/{commentId} {
+      allow read: if request.auth != null; 
+      allow create: if request.auth != null && request.resource.data.get('userId', '') == request.auth.uid;
+    }
+  }
+}
