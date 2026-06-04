@@ -15,8 +15,8 @@ service firebase.storage {
         firestore.exists(/databases/(default)/documents/samples/$(sampleId)) &&
         (
           firestore.get(/databases/(default)/documents/samples/$(sampleId)).data.get('userId', '') == request.auth.uid ||
-          (firestore.get(/databases/(default)/documents/samples/$(sampleId)).data.get('sharedWithLabId', '') != '' && 
-           isLabMember(firestore.get(/databases/(default)/documents/samples/$(sampleId)).data.sharedWithLabId))
+          (firestore.get(/databases/(default)/documents/samples/$(sampleId)).data.get('sharedWithLabId', '') != '' &&
+           isLabMember(firestore.get(/databases/(default)/documents/samples/$(sampleId)).data.get('sharedWithLabId', '')))
         );
 
       // Only the owner of the Firestore record can upload or delete files

@@ -8,7 +8,7 @@ export default function Home() {
         <header className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-4">
           <div>
             <h1 className="text-4xl font-extrabold tracking-tight text-blue-600">
-            DeNovix Data Mangager
+            DeNovix Data Vault
           </h1>
           <p className="text-lg text-gray-600">
               Manage and analyze your DeNovix UV-Vis, Fluorescence and Cell Counting data.
