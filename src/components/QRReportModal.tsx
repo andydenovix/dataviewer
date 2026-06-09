@@ -51,7 +51,7 @@ export const QRReportModal: React.FC<QRReportModalProps> = ({ samples, onClose, 
     const payload = { v: 1, ts: Math.floor(Date.now() / 1000), d: summary };
     const effectiveBaseUrl = baseUrlOverride || localBaseUrl;
     const dataStr = encodeURIComponent(JSON.stringify(payload));
-    return `${effectiveBaseUrl}/?import=${dataStr}`;
+    return `${effectiveBaseUrl}/mobile-report?import=${dataStr}`;
   }, [samples, baseUrlOverride, localBaseUrl]);
 
   const dilutionResults = useMemo(() => {
@@ -76,9 +76,8 @@ export const QRReportModal: React.FC<QRReportModalProps> = ({ samples, onClose, 
   }, [samples, targetConc, targetVol]);
 
   return (
-    <>
-      <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[100] flex items-center justify-center p-4 print:static print:block print:bg-white print:p-0">
-        <div className="bg-white rounded-2xl shadow-2xl w-full max-w-4xl overflow-hidden flex flex-col md:flex-row max-h-[90vh] print:max-h-none print:shadow-none print:block print:w-full print:border-none">
+    <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[100] flex items-center justify-center p-4 print:!static print:!block print:!bg-white print:!p-0 print:!z-auto print:!w-auto print:!h-auto print:!max-w-none print:!max-h-none print:!overflow-visible">
+      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-4xl overflow-hidden flex flex-col md:flex-row max-h-[90vh] print:!max-h-none print:!shadow-none print:!block print:!w-full print:!border-none print:!overflow-visible print:!max-w-none print:!flex-none print:!h-auto print:!z-auto">
           
           {/* Left Side: QR Code */}
           <div className="p-8 bg-slate-50 border-r border-slate-100 flex flex-col items-center justify-center text-center w-full md:w-[350px] print:hidden">
@@ -100,7 +99,7 @@ export const QRReportModal: React.FC<QRReportModalProps> = ({ samples, onClose, 
           </div>
 
           {/* Right Side: Dilution Preview & Tools (THIS IS THE PRINTABLE AREA) */}
-          <div id="printable-report" className="flex-1 p-8 overflow-y-auto print:p-0 print:overflow-visible print:block print:w-full print:!h-auto">
+          <div id="printable-report" className="flex-1 p-8 overflow-y-auto print:!p-0 print:!overflow-visible print:!block print:!w-full print:!h-auto">
             
             <div className="flex justify-between items-start mb-6">
               <div>
@@ -201,6 +200,5 @@ export const QRReportModal: React.FC<QRReportModalProps> = ({ samples, onClose, 
           </div>
         </div>
       </div>
-    </>
   );
 };
