@@ -19,6 +19,20 @@ import { CellCountComparison } from './CellCountComparison';
 import { QRReportModal } from './QRReportModal';
 import { BRAND_COLOR } from '@/lib/constants';
 
+// Sub-components moved outside to prevent remounting on every render
+const SortIcon = ({ field, currentKey, direction }: { field: string, currentKey: string, direction: 'asc' | 'desc' }) => {
+  if (currentKey !== field) return <ArrowUpDown className="h-3 w-3 ml-1 opacity-20" />;
+  return direction === 'asc' ? <ArrowUp className="h-3 w-3 ml-1 text-blue-600" /> : <ArrowDown className="h-3 w-3 ml-1 text-blue-600" />;
+};
+
+const ThSortable = ({ label, field, sortConfig, onSort, center = false }: { label: string, field: keyof LabSample | 'measuredAt', sortConfig: any, onSort: (f: any) => void, center?: boolean }) => (
+  <th className={`p-4 font-semibold cursor-pointer hover:bg-slate-100 transition-colors ${center ? 'text-center' : ''}`} onClick={() => onSort(field)}>
+    <div className={`flex items-center ${center ? 'justify-center' : ''}`}>
+      {label} <SortIcon field={field} currentKey={sortConfig.key} direction={sortConfig.direction} />
+    </div>
+  </th>
+);
+
 export const SampleDashboard: React.FC = () => {
   const { user } = useAuth();
   const [samples, setSamples] = useState<LabSample[]>([]);
@@ -304,17 +318,6 @@ export const SampleDashboard: React.FC = () => {
     const strB = String(bVal || '').toLowerCase();
     return sortConfig.direction === 'asc' ? strA.localeCompare(strB) : strB.localeCompare(strA);
   }), [filteredSamples, sortConfig]);
-
-  const SortIcon = ({ field }: { field: keyof LabSample | 'measuredAt' }) => {
-    if (sortConfig.key !== field) return <ArrowUpDown className="h-3 w-3 ml-1 opacity-20" />;
-    return sortConfig.direction === 'asc' ? <ArrowUp className="h-3 w-3 ml-1 text-blue-600" /> : <ArrowDown className="h-3 w-3 ml-1 text-blue-600" />;
-  };
-
-  const ThSortable = ({ label, field, center = false }: { label: string, field: keyof LabSample | 'measuredAt', center?: boolean }) => (
-    <th className={`p-4 font-semibold cursor-pointer hover:bg-slate-100 transition-colors ${center ? 'text-center' : ''}`} onClick={() => handleSort(field)}>
-      <div className={`flex items-center ${center ? 'justify-center' : ''}`}>{label} <SortIcon field={field} /></div>
-    </th>
-  );
 
   const applications = useMemo(() => Array.from(new Set(samples.map(s => s.application))), [samples]);
 

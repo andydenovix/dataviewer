@@ -99,7 +99,7 @@ export const FileUpload: React.FC = () => {
             liveCells: typeof liveVal === 'number' ? liveVal : parseFloat(String(liveVal || 0)),
             deadCells: typeof deadVal === 'number' ? deadVal : parseFloat(String(deadVal || 0)),
             viability: typeof viabilityVal === 'number' ? viabilityVal : parseFloat(String(viabilityVal || 0)),
-          } : null;
+          } : undefined; 
           
           const finalMetadata: LabSample['metadata'] = { ...cleanMetadata, unit: row.unit || cleanMetadata['Units'] || 'AU', cellCountData };
           
