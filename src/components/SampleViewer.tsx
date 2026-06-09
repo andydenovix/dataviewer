@@ -1,12 +1,25 @@
 "use client";
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { LabSample } from '../types';
-import { X, ChevronLeft, ChevronRight, Copy, Check, Upload, Loader2 } from 'lucide-react';
+import { X, ChevronLeft, ChevronRight, Copy, Check, Upload, Loader2, Info } from 'lucide-react';
 import { BRAND_COLOR } from '@/lib/constants';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { doc, updateDoc } from 'firebase/firestore';
 import { db, storage } from '@/lib/firebase';
+import dynamic from 'next/dynamic';
+
+const Plot = dynamic(
+  () => import('react-plotly.js').then(mod => mod.default || (mod as any).default || mod),
+  { 
+    ssr: false,
+    loading: () => (
+      <div className="w-full h-full flex items-center justify-center bg-slate-50 min-h-[400px]">
+        <Loader2 className="w-8 h-8 animate-spin text-slate-400" />
+      </div>
+    )
+  }
+);
 
 export interface SampleViewerProps {
   sample: LabSample;
@@ -23,9 +36,18 @@ const IMAGE_TYPE_LABELS: Record<ImageType, { label: string; description: string;
 };
 
 export const SampleViewer: React.FC<SampleViewerProps> = ({ sample, onClose }) => {
-  const [activeImageType, setActiveImageType] = useState<ImageType>('bf');
+  const [isMounted, setIsMounted] = useState(false);
+  const [activeImageType, setActiveImageType] = useState<ImageType>(() => {
+    const imageUrls = sample.images || {};
+    if (imageUrls.bf) return 'bf';
+    return (Object.keys(imageUrls)[0] as ImageType) || 'bf';
+  });
   const [copiedMetaKey, setCopiedMetaKey] = useState<string | null>(null);
   const [isUploading, setIsUploading] = useState(false);
+
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
 
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -52,6 +74,7 @@ export const SampleViewer: React.FC<SampleViewerProps> = ({ sample, onClose }) =
   const imageUrls = sample.images || {};
   const currentImageUrl = imageUrls[activeImageType];
   const cellCountData = sample.metadata?.cellCountData;
+  const hasSpectralData = sample.data && sample.data.wavelengths?.length > 0;
   const protocolName = sample.metadata?.protocolName;
 
   const imageTypes: ImageType[] = ['bf', 'red', 'green', 'result'];
@@ -88,7 +111,32 @@ export const SampleViewer: React.FC<SampleViewerProps> = ({ sample, onClose }) =
           {/* Image Viewer */}
           <div className="lg:col-span-2">
             <div className="bg-slate-50 rounded-xl border border-slate-200 overflow-hidden">
-              {/* Image Display */}
+              {/* Spectral Display or Image Display */}
+              {hasSpectralData && (!currentImageUrl || activeImageType === 'result') ? (
+                <div className="aspect-video bg-white p-4 min-h-[400px] w-full">
+                  <Plot
+                    key={`plot-${sample.id}`}
+                    data={[{
+                      x: sample.data!.wavelengths,
+                      y: sample.data!.absorbance,
+                      type: 'scatter',
+                      mode: 'lines',
+                      name: sample.sampleName,
+                      line: { color: BRAND_COLOR, width: 3 }
+                    }]}
+                    layout={{
+                      autosize: true,
+                      margin: { t: 10, b: 40, l: 50, r: 10 },
+                      xaxis: { title: 'Wavelength (nm)', gridcolor: '#f1f5f9' },
+                      yaxis: { title: 'Absorbance (AU)', gridcolor: '#f1f5f9' },
+                    }}
+                    useResizeHandler={true}
+                    style={{ width: '100%', height: '100%' }} // <-- Inline CSS fix applied here
+                    className="w-full h-full"
+                    config={{ displaylogo: false, responsive: true }}
+                  />
+                </div>
+              ) : (
               <div className="aspect-video bg-slate-900 flex items-center justify-center">
                 {currentImageUrl ? (
                   <img
@@ -119,6 +167,7 @@ export const SampleViewer: React.FC<SampleViewerProps> = ({ sample, onClose }) =
                   </label>
                 )}
               </div>
+              )}
 
               {/* Image Type Selector */}
               <div className="p-4 border-t border-slate-200 bg-white">
@@ -258,11 +307,18 @@ export const SampleViewer: React.FC<SampleViewerProps> = ({ sample, onClose }) =
                 <div>
                   <div className="font-semibold text-slate-700">Measured</div>
                   <div className="text-slate-600">
-                    {new Date(
-                      sample.measuredAt instanceof Date
-                        ? sample.measuredAt
-                        : (sample.measuredAt as any).seconds * 1000
-                    ).toLocaleDateString()}
+                    {isMounted && sample.measuredAt && (() => {
+                      const d = sample.measuredAt as any;
+                      try {
+                        const date = d instanceof Date ? d : 
+                                   typeof d.toDate === 'function' ? d.toDate() :
+                                   d.seconds ? new Date(d.seconds * 1000) :
+                                   new Date(d);
+                        return isNaN(date.getTime()) ? 'Invalid Date' : date.toLocaleDateString();
+                      } catch (e) {
+                        return 'N/A';
+                      }
+                    })()}
                   </div>
                 </div>
               </div>

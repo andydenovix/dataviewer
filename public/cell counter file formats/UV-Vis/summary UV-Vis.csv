@@ -1,0 +1,13 @@
+Sample Number,Sample Name,Concentration,Units,Factor,A260,260/280,260/280 Alert,260/230,260/230 Alert,Date/Time,Measure Type,Calc Method
+24,LCL18572 RS592 ABE,64.668,ng/uL,50,1.293,1.444,Minimum 260/280 Ratio Limit,1.586,Minimum 260/230 Ratio Limit,2026-06-01 11:26,M,dsDNA
+4,200,60.860,ng/uL,50,1.217,1.573,Minimum 260/280 Ratio Limit,1.294,Minimum 260/230 Ratio Limit,2026-06-04 10:19,M,dsDNA
+25,LCL18572 wt,57.020,ng/uL,50,1.140,1.451,Minimum 260/280 Ratio Limit,2.291,,2026-06-01 11:27,M,dsDNA
+22,LCL18572 RS169 CBE,46.908,ng/uL,50,0.938,1.365,Minimum 260/280 Ratio Limit,1.152,Minimum 260/230 Ratio Limit,2026-06-01 11:24,M,dsDNA
+3,100,45.589,ng/uL,50,0.912,1.638,Minimum 260/280 Ratio Limit,1.334,Minimum 260/230 Ratio Limit,2026-06-04 10:18,M,dsDNA
+6,,45.065,ng/uL,50,0.901,1.375,Minimum 260/280 Ratio Limit,0.996,Minimum 260/230 Ratio Limit,2026-05-26 10:55,M,dsDNA
+7,,33.037,ng/uL,50,0.661,1.373,Minimum 260/280 Ratio Limit,2.706,,2026-05-26 10:56,M,dsDNA
+23,LCL18572 RS697 CBE,30.872,ng/uL,50,0.617,1.524,Minimum 260/280 Ratio Limit,1.256,Minimum 260/230 Ratio Limit,2026-06-01 11:25,M,dsDNA
+2,50 ng,23.680,ng/uL,50,0.474,1.574,Minimum 260/280 Ratio Limit,1.255,Minimum 260/230 Ratio Limit,2026-06-04 10:17,M,dsDNA
+19,K27 538,16.656,ng/uL,50,0.333,1.218,Minimum Concentration Limit,0.603,Minimum Concentration Limit,2026-05-31 17:42,M,dsDNA
+13,Water,14.189,ng/uL,50,0.284,2.009,Minimum Concentration Limit,2.993,Minimum Concentration Limit,2026-05-26 18:53,M,dsDNA
+17,IgG 538,12.441,ng/uL,50,0.249,1.308,Minimum Concentration Limit,0.582,Minimum Concentration Limit,2026-05-31 17:39,M,dsDNA

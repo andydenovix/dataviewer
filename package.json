@@ -3,8 +3,8 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev",
-    "build": "next build",
+    "dev": "next dev --webpack",
+    "build": "next build --webpack",
     "start": "next start",
     "lint": "eslint"
   },
@@ -13,7 +13,8 @@
     "lucide-react": "^1.17.0",
     "next": "16.2.6",
     "papaparse": "^5.5.3",
-    "plotly.js": "^3.5.1",
+    "plotly.js": "^2.35.2",
+    "qrcode.react": "^4.2.0",
     "react": "19.2.4",
     "react-dom": "19.2.4",
     "react-plotly.js": "^2.6.0",
