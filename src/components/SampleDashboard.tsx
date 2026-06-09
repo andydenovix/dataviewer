@@ -25,7 +25,7 @@ const SortIcon = ({ field, currentKey, direction }: { field: string, currentKey:
   return direction === 'asc' ? <ArrowUp className="h-3 w-3 ml-1 text-blue-600" /> : <ArrowDown className="h-3 w-3 ml-1 text-blue-600" />;
 };
 
-const ThSortable = ({ label, field, sortConfig, onSort, center = false }: { label: string, field: keyof LabSample | 'measuredAt', sortConfig: any, onSort: (f: any) => void, center?: boolean }) => (
+const ThSortable = ({ label, field, sortConfig, onSort, center = false }: { label: string, field: keyof LabSample | 'measuredAt', sortConfig: { key: keyof LabSample | 'measuredAt'; direction: 'asc' | 'desc' }, onSort: (f: keyof LabSample | 'measuredAt') => void, center?: boolean }) => (
   <th className={`p-4 font-semibold cursor-pointer hover:bg-slate-100 transition-colors ${center ? 'text-center' : ''}`} onClick={() => onSort(field)}>
     <div className={`flex items-center ${center ? 'justify-center' : ''}`}>
       {label} <SortIcon field={field} currentKey={sortConfig.key} direction={sortConfig.direction} />
@@ -483,12 +483,12 @@ export const SampleDashboard: React.FC = () => {
                     <th className="p-4 w-10">
                       <input type="checkbox" checked={selectedSampleIds.length === filteredSamples.length && filteredSamples.length > 0} onChange={toggleSelectAll} />
                     </th>
-                    <ThSortable label="Sample Name" field="sampleName" />
+                    <ThSortable label="Sample Name" field="sampleName" sortConfig={sortConfig} onSort={handleSort} />
                     {activeHub === 'quant' ? (
                       <>
-                        <ThSortable label="Application" field="application" />
-                        <ThSortable label="Conc." field="concentration" />
-                        <ThSortable label="260/280" field="ratios" />
+                        <ThSortable label="Application" field="application" sortConfig={sortConfig} onSort={handleSort} />
+                        <ThSortable label="Conc." field="concentration" sortConfig={sortConfig} onSort={handleSort} />
+                        <ThSortable label="260/280" field="ratios" sortConfig={sortConfig} onSort={handleSort} />
                         <th className="p-4">260/230</th>
                         <th className="p-4 text-center">Quality</th>
                       </>
@@ -500,7 +500,7 @@ export const SampleDashboard: React.FC = () => {
                         <th className="p-4 text-center">Mean Diameter</th>
                       </>
                     )}
-                    <ThSortable label="Measured" field="measuredAt" />
+                    <ThSortable label="Measured" field="measuredAt" sortConfig={sortConfig} onSort={handleSort} />
                     <th className="p-4 print:hidden"></th>
                   </tr>
                 </thead>
