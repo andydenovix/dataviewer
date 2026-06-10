@@ -3,8 +3,8 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { QRCodeSVG } from 'qrcode.react';
 import { LabSample } from '../types';
-import { X, Smartphone, Calculator, Printer } from 'lucide-react';
-import { BRAND_COLOR } from '../lib/constants'; // Adjusted path to match standard Next.js
+import { X, Smartphone, Calculator, Printer, Info } from 'lucide-react';
+import { BRAND_COLOR } from '@/lib/constants'; // Adjusted path to match standard Next.js
 
 interface QRReportModalProps {
   samples: LabSample[];
@@ -35,7 +35,7 @@ export const QRReportModal: React.FC<QRReportModalProps> = ({ samples, onClose, 
           n: s.sampleName,
           t: metrics?.totalCells,
           v: metrics?.viability,
-          d: s.metadata?.MeanDiameter || s.metadata?.['Mean Diameter (um)']
+          d: metrics?.meanDiameter
         };
       }
       return {

@@ -411,20 +411,21 @@ export const SampleDashboard: React.FC = () => {
             
             {/* Toolbar & Tools - Hidden on Print */}
             <div className="border-b border-slate-100 bg-slate-50/80 print:hidden">
-              <div className="p-4 flex flex-wrap gap-4 items-center justify-between">
-                <div className="flex flex-wrap gap-2 items-center">
-                  <div className="relative">
+            <div className="p-4 space-y-4">
+              <div className="flex flex-col md:flex-row gap-4 items-start md:items-center justify-between">
+                <div className="flex flex-wrap gap-2 items-center w-full md:w-auto">
+                  <div className="relative w-full sm:w-72">
                     <Search className="absolute left-3 top-2.5 h-4 w-4 text-slate-400" />
-                    <input type="text" placeholder="Search by sample name..." className="pl-9 pr-3 py-2 border rounded-md text-sm w-72 focus:ring-2 focus:ring-blue-500 outline-none bg-white" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
+                    <input type="text" placeholder="Search by sample name..." className="w-full pl-9 pr-3 py-2 border rounded-md text-sm focus:ring-2 focus:ring-blue-500 outline-none bg-white" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
                   </div>
-                  <select className="px-3 py-2 border rounded-md text-sm bg-white outline-none" value={filterType} onChange={(e) => setFilterType(e.target.value)}>
+                  <select className="flex-1 sm:flex-none px-3 py-2 border rounded-md text-sm bg-white outline-none" value={filterType} onChange={(e) => setFilterType(e.target.value)}>
                     <option value="all">All Types</option><option value="spectro">Spectro</option><option value="fluor">Fluorescence</option><option value="cell-count">Cell Count</option><option value="image">Image</option>
                   </select>
-                  <select className="px-3 py-2 border rounded-md text-sm bg-white outline-none" value={filterApp} onChange={(e) => setFilterApp(e.target.value)}>
+                  <select className="flex-1 sm:flex-none px-3 py-2 border rounded-md text-sm bg-white outline-none" value={filterApp} onChange={(e) => setFilterApp(e.target.value)}>
                     <option value="all">All Applications</option>{applications.map(app => <option key={app} value={app}>{app}</option>)}
                   </select>
-                  <div className="flex items-center gap-1">
-                    <select className="px-3 py-2 border rounded-md text-sm bg-white outline-none font-medium" style={{ color: BRAND_COLOR }} value={filterProjectId} onChange={handleProjectFilterChange}>
+                  <div className="flex items-center gap-1 w-full sm:w-auto">
+                    <select className="flex-1 sm:flex-none px-3 py-2 border rounded-md text-sm bg-white outline-none font-medium" style={{ color: BRAND_COLOR }} value={filterProjectId} onChange={handleProjectFilterChange}>
                       <option value="all">Global (All Projects)</option><option value="">Unassigned Samples</option><option value="CREATE_NEW" className="font-bold">+ Create New Project</option>
                       {projects.map(p => <option key={p.id} value={p.id}>📁 {p.name}</option>)}
                     </select>
@@ -436,7 +437,7 @@ export const SampleDashboard: React.FC = () => {
                 </div>
 
                 {selectedSampleIds.length > 0 && (
-                  <div className="flex gap-2">
+                  <div className="flex flex-wrap gap-2 w-full md:w-auto justify-end">
                     {userLabs.length > 0 && viewMode === 'private' && (
                       userLabs.length === 1 ? (
                         <button onClick={() => handleShareWithLab(userLabs[0].id)} disabled={isActionLoading} className="px-4 py-2 bg-purple-50 text-purple-600 border border-purple-200 text-sm font-medium rounded-md hover:bg-purple-100 transition-colors flex items-center gap-2 disabled:opacity-50"><Share2 className="h-4 w-4" /> Share with Lab</button>
@@ -458,11 +459,12 @@ export const SampleDashboard: React.FC = () => {
               </div>
 
               {/* Analytical Workflows Row */}
-              <div className="px-4 pb-4 flex gap-3 items-center print:hidden">
+              <div className="px-4 pb-4 flex flex-wrap gap-3 items-center print:hidden">
                 <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest mr-2">Analytical Workflows</span>
                 <button onClick={() => setIsManagingReplicates(true)} className="px-4 py-1.5 border rounded-lg text-sm hover:bg-white transition-all shadow-sm flex items-center gap-2 font-bold" style={{ color: BRAND_COLOR, borderColor: `${BRAND_COLOR}44`, backgroundColor: `${BRAND_COLOR}08` }}><Layers className="h-4 w-4" /> Identify Replicates</button>
                 <button onClick={() => setIsMatchingQC(true)} className="px-4 py-1.5 border rounded-lg text-sm hover:bg-white transition-all shadow-sm flex items-center gap-2 font-bold" style={{ color: BRAND_COLOR, borderColor: `${BRAND_COLOR}44`, backgroundColor: `${BRAND_COLOR}08` }}><Beaker className="h-4 w-4" /> Method Pairing</button>
               </div>
+            </div>
             </div>
 
             {filterGroupId && (

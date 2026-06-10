@@ -183,6 +183,7 @@ export default function MobileReportPage() {
                 ) : (
                   <div className="font-mono font-bold text-slate-800">
                     Total: {s.t?.toLocaleString()} | Viability: {s.v?.toFixed(1)}%
+                    {s.d && <span className="ml-2 text-slate-500">Mean Dia: {s.d.toFixed(1)}µm</span>}
                   </div>
                 )}
               </div>

@@ -35,6 +35,21 @@ export const FileUpload: React.FC = () => {
     };
   };
 
+  // Helper to find and parse numeric values from metadata, prioritizing specific keys
+  const getNumericValueFromMetadata = (metadata: Record<string, any>, keys: string[], defaultValue: number | undefined = undefined): number | undefined => {
+    for (const key of keys) {
+      const cleanedKey = key.toUpperCase().replace(/[^A-Z0-9]/g, '');
+      const entry = Object.entries(metadata).find(([k]) => 
+        k.toUpperCase().replace(/[^A-Z0-9]/g, '') === cleanedKey
+      );
+      if (entry && (entry[1] !== undefined && entry[1] !== null && entry[1] !== '')) {
+        const parsed = parseFloat(String(entry[1]));
+        if (!isNaN(parsed)) return parsed;
+      }
+    }
+    return defaultValue;
+  };
+
   const [uploading, setUploading] = useState(false);
   const { user } = useAuth();
 
@@ -79,29 +94,32 @@ export const FileUpload: React.FC = () => {
 
           const resultId = String(findMeta('ResultID') || findMeta('ID') || row.metadata?.['Result ID'] || '').trim();
 
-          const viabilityVal = findMeta('Viability') ?? row.viability;
-          const totalVal = findMeta('TotalCells/mL') ?? findMeta('TotalCellCount') ?? findMeta('TotalCount') ?? row.totalCells;
-          const liveVal = findMeta('LiveCells/mL') ?? findMeta('LiveCellCount') ?? row.liveCells;
-          const deadVal = findMeta('DeadCells/mL') ?? findMeta('DeadCellCount') ?? row.deadCells;
+          const viabilityVal = getNumericValueFromMetadata(cleanMetadata, ['Viability', '% Viability']) ?? row.viability;
+          const totalVal = getNumericValueFromMetadata(cleanMetadata, ['TotalCells/mL', 'Total Cell Count', 'Total Count']) ?? row.totalCells;
+          const liveVal = getNumericValueFromMetadata(cleanMetadata, ['LiveCells/mL', 'Live Cell Count', 'Live Count']) ?? row.liveCells;
+          const deadVal = getNumericValueFromMetadata(cleanMetadata, ['DeadCells/mL', 'Dead Cell Count', 'Dead Count']) ?? row.deadCells;
+          const meanDiameterVal = getNumericValueFromMetadata(cleanMetadata, ['MeanDiameter', 'Mean Diameter (um)']);
 
           const appName = (row.application || cleanMetadata['Application'] || '').trim().toUpperCase();
           const metaKeys = Object.keys(cleanMetadata).map(k => k.toUpperCase());
           const metaValues = Object.values(cleanMetadata).map(v => String(v).toUpperCase());
           
           const hasCellMarkers = metaKeys.some(k => k.includes('VIABILITY') || k.includes('CELLS/ML') || k.includes('CELL COUNT') || k.includes('AOPI')) || metaValues.some(v => v.includes('AOPI') || v.includes('CELLDROP'));
-
           const isCellCount = row.wavelengths.length === 0 && (hasCellMarkers || appName.includes('CELL') || appName.includes('AOPI') || appName.includes('COUNT') || totalVal !== undefined);
 
-          const finalApp = isCellCount && (appName === 'CELL COUNT' || !appName) ? 'AOPI' : appName;
+          const finalApp = isCellCount && (appName === 'CELL COUNT' || !appName) ? 'AOPI' : (appName || 'General Absorbance');
 
-          const cellCountData = isCellCount ? {
-            totalCells: typeof totalVal === 'number' ? totalVal : parseFloat(String(totalVal || 0)),
-            liveCells: typeof liveVal === 'number' ? liveVal : parseFloat(String(liveVal || 0)),
-            deadCells: typeof deadVal === 'number' ? deadVal : parseFloat(String(deadVal || 0)),
-            viability: typeof viabilityVal === 'number' ? viabilityVal : parseFloat(String(viabilityVal || 0)),
-          } : undefined; 
+          const cellCountData = isCellCount ? Object.fromEntries(
+            Object.entries({
+              totalCells: totalVal,
+              liveCells: liveVal,
+              deadCells: deadVal,
+              viability: viabilityVal,
+              meanDiameter: meanDiameterVal, // Include mean diameter
+            }).filter(([, value]) => value !== undefined && value !== null) // Filter out undefined/null values
+          ) : undefined;
           
-          const finalMetadata: LabSample['metadata'] = { ...cleanMetadata, unit: row.unit || cleanMetadata['Units'] || 'AU', cellCountData };
+          const finalMetadata: LabSample['metadata'] = { ...cleanMetadata, unit: row.unit || cleanMetadata['Units'] || 'AU', cellCountData: cellCountData };
           
           const newSample: Omit<LabSample, 'id'> = {
             userId: user.uid,

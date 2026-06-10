@@ -294,7 +294,7 @@ export const SpectralPlot: React.FC<SpectralPlotProps> = ({ samples }) => {
       </div>
 
     <div className="flex flex-col lg:flex-row gap-6">
-      <div className="w-full lg:w-72 bg-white rounded-xl shadow-sm border border-slate-200 flex flex-col overflow-hidden h-[600px] no-print">
+      <div className="w-full lg:w-72 bg-white rounded-xl shadow-sm border border-slate-200 flex flex-col overflow-hidden h-auto max-h-64 lg:h-[600px] lg:max-h-none no-print">
         <div className="p-4 border-b border-slate-100 bg-slate-50/50 flex items-center justify-between print-hidden">
           <h3 className="font-semibold text-slate-700 text-sm">Visible Traces</h3>
           <div className="flex gap-2">
@@ -339,7 +339,7 @@ export const SpectralPlot: React.FC<SpectralPlotProps> = ({ samples }) => {
         </div>
       </div>
 
-      <div className="flex-1 bg-white p-4 rounded-xl shadow-sm border border-slate-200 h-[600px]">
+      <div className="flex-1 bg-white p-2 sm:p-4 rounded-xl shadow-sm border border-slate-200 h-[400px] sm:h-[600px]">
         <div ref={plotDivRef} className="w-full h-full" style={{ minHeight: '500px' }} />
       </div>
     </div>

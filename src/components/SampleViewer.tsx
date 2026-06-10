@@ -91,7 +91,7 @@ export const SampleViewer: React.FC<SampleViewerProps> = ({ sample, onClose }) =
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50 overflow-y-auto">
       <div className="bg-white rounded-2xl shadow-xl max-w-6xl w-full my-8">
         {/* Header */}
-        <div className="border-b border-slate-200 p-6 flex justify-between items-center">
+        <div className="border-b border-slate-200 p-4 sm:p-6 flex justify-between items-center">
           <div>
             <h2 className="text-2xl font-bold text-slate-900">{sample.sampleName}</h2>
             <p className="text-sm text-slate-500 mt-1">
@@ -107,13 +107,13 @@ export const SampleViewer: React.FC<SampleViewerProps> = ({ sample, onClose }) =
           </button>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 p-6">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 p-4 sm:p-6">
           {/* Image Viewer */}
           <div className="lg:col-span-2">
             <div className="bg-slate-50 rounded-xl border border-slate-200 overflow-hidden">
               {/* Spectral Display or Image Display */}
               {hasSpectralData && (!currentImageUrl || activeImageType === 'result') ? (
-                <div className="aspect-video bg-white p-4 min-h-[400px] w-full">
+                <div className="aspect-auto sm:aspect-video bg-white p-2 sm:p-4 min-h-[300px] sm:min-h-[400px] w-full">
                   <Plot
                     key={`plot-${sample.id}`}
                     data={[{
@@ -172,7 +172,7 @@ export const SampleViewer: React.FC<SampleViewerProps> = ({ sample, onClose }) =
               {/* Image Type Selector */}
               <div className="p-4 border-t border-slate-200 bg-white">
                 <p className="text-xs font-semibold text-slate-500 uppercase mb-3">View Type</p>
-                <div className="grid grid-cols-4 gap-2">
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                   {imageTypes.map((type) => {
                     const isAvailable = imageUrls[type];
                     const isActive = activeImageType === type;
@@ -235,6 +235,14 @@ export const SampleViewer: React.FC<SampleViewerProps> = ({ sample, onClose }) =
                       {cellCountData.viability.toFixed(1)}%
                     </span>
                   </div>
+                  {cellCountData.meanDiameter && (
+                    <div className="flex justify-between border-t border-emerald-200 pt-2 mt-2">
+                      <span className="text-slate-600">Mean Diameter:</span>
+                      <span className="font-mono font-bold text-slate-900">
+                        {cellCountData.meanDiameter.toFixed(1)} µm
+                      </span>
+                    </div>
+                  )}
                 </div>
               </div>
             )}
