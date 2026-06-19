@@ -1,5 +1,5 @@
 import { initializeApp, getApps, getApp, FirebaseApp } from "firebase/app";
-import { getFirestore, Firestore, initializeFirestore } from "firebase/firestore";
+import { getFirestore, Firestore, initializeFirestore, persistentLocalCache, persistentMultipleTabManager } from "firebase/firestore";
 import { getAuth, Auth } from "firebase/auth";
 import { getStorage, FirebaseStorage } from "firebase/storage";
 
@@ -37,10 +37,16 @@ if (typeof window !== "undefined") {
   }
 
   try {
-    app = getApps().length > 0 ? getApp() : initializeApp(firebaseConfig);
-    db = initializeFirestore(app, {
-      ignoreUndefinedProperties: true
-    });
+    const existingApps = getApps();
+    app = existingApps.length > 0 ? getApp() : initializeApp(firebaseConfig);
+    // initializeFirestore throws on hot-reload if the app was already initialized;
+    // use getFirestore to retrieve the existing instance in that case.
+    db = existingApps.length === 0
+      ? initializeFirestore(app, {
+          ignoreUndefinedProperties: true,
+          localCache: persistentLocalCache({ tabManager: persistentMultipleTabManager() }),
+        })
+      : getFirestore(app);
     auth = getAuth(app);
     storage = getStorage(app);
   } catch (err) {

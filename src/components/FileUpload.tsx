@@ -7,7 +7,9 @@ import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { parseFile } from '../lib/parsers';
 import { LabSample } from '../types';
 import { useAuth } from '../lib/AuthContext';
+import { useProtocols } from '@/hooks/useProtocols';
 import { BRAND_COLOR } from '../lib/constants';
+import { FlaskConical } from 'lucide-react';
 
 export const FileUpload: React.FC = () => {
   const parseDeNovixDate = (dateStr: string): Date => {
@@ -51,15 +53,16 @@ export const FileUpload: React.FC = () => {
   };
 
   const [uploading, setUploading] = useState(false);
+  const [isDragging, setIsDragging] = useState(false);
+  const [selectedProtocolId, setSelectedProtocolId] = useState('');
   const { user } = useAuth();
+  const protocols = useProtocols(user);
 
-  const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    const files = Array.from(event.target.files || []);
+  const processFiles = async (files: File[]) => {
     if (files.length === 0 || !user) {
       if (!user) alert("Please sign in to upload data.");
       return;
     }
-
     setUploading(true);
     try {
       const csvFile = files.find(f => f.name.endsWith('.csv') || f.name.endsWith('.xlsx') || f.name.endsWith('.xls'));
@@ -70,8 +73,49 @@ export const FileUpload: React.FC = () => {
 
       if (csvFile) {
         const parsedRows = await parseFile(csvFile);
-        
-        for (const row of parsedRows) {
+
+        if (parsedRows.length === 0) {
+          alert('No data rows found in the file. Check that it is a valid DeNovix export.');
+          return;
+        }
+
+        const invalidRows = parsedRows.filter(row => {
+          const name = (row.sampleName || row.metadata?.['Sample Name'] || '').trim();
+          const hasName = name.length > 0;
+          const hasData =
+            row.wavelengths?.length > 0 ||
+            row.concentration != null ||
+            row.rfu != null ||
+            row.totalCells != null;
+          return !hasName || !hasData;
+        });
+
+        if (invalidRows.length === parsedRows.length) {
+          alert(
+            'The file could not be parsed correctly — no recognisable sample data was found.\n\n' +
+            'Make sure this is a DeNovix CSV or Excel export with standard column headers.'
+          );
+          return;
+        }
+
+        if (invalidRows.length > 0) {
+          const proceed = window.confirm(
+            `${invalidRows.length} of ${parsedRows.length} rows have missing names or data and will be skipped.\n\nProceed with the remaining ${parsedRows.length - invalidRows.length} rows?`
+          );
+          if (!proceed) return;
+        }
+
+        const validRows = parsedRows.filter(row => {
+          const name = (row.sampleName || row.metadata?.['Sample Name'] || '').trim();
+          const hasData =
+            row.wavelengths?.length > 0 ||
+            row.concentration != null ||
+            row.rfu != null ||
+            row.totalCells != null;
+          return name.length > 0 && hasData;
+        });
+
+        for (const row of validRows) {
           const measuredAt = row.rawDate 
             ? parseDeNovixDate(row.rawDate) 
             : new Date(csvFile.lastModified);
@@ -109,24 +153,30 @@ export const FileUpload: React.FC = () => {
 
           const finalApp = isCellCount && (appName === 'CELL COUNT' || !appName) ? 'AOPI' : (appName || 'General Absorbance');
 
-          const cellCountData = isCellCount ? Object.fromEntries(
-            Object.entries({
-              totalCells: totalVal,
-              liveCells: liveVal,
-              deadCells: deadVal,
-              viability: viabilityVal,
-              meanDiameter: meanDiameterVal, // Include mean diameter
-            }).filter(([, value]) => value !== undefined && value !== null) // Filter out undefined/null values
-          ) : undefined;
+          const cellCountData: import('../types').CellCountData | undefined = isCellCount
+            ? {
+                totalCells: totalVal ?? 0,
+                liveCells: liveVal ?? 0,
+                deadCells: deadVal ?? 0,
+                viability: viabilityVal ?? 0,
+                ...(meanDiameterVal != null ? { meanDiameter: meanDiameterVal } : {}),
+              }
+            : undefined;
           
-          const finalMetadata: LabSample['metadata'] = { ...cleanMetadata, unit: row.unit || cleanMetadata['Units'] || 'AU', cellCountData: cellCountData };
-          
+          const activeProtocol = protocols.find(p => p.id === selectedProtocolId);
+          const finalMetadata: LabSample['metadata'] = {
+            ...cleanMetadata,
+            unit: row.unit || cleanMetadata['Units'] || 'AU',
+            cellCountData: cellCountData,
+            ...(activeProtocol ? { protocolName: activeProtocol.name } : {}),
+          };
+
           const newSample: Omit<LabSample, 'id'> = {
             userId: user.uid,
             sampleName: (row.sampleName || cleanMetadata['Sample Name'] || csvFile?.name.replace(/\.[^/.]+$/, "") || "Unnamed").trim(),
             projectId: null,
             sampleType: isCellCount ? 'cell-count' : (row.wavelengths.length > 0 ? 'spectro' : 'fluor'),
-            application: finalApp || 'General Absorbance',
+            application: activeProtocol?.application || finalApp || 'General Absorbance',
             concentration: row.concentration || 0,
             rfu: row.rfu || 0,
             stockConcentration: row.stockConcentration || 0,
@@ -135,10 +185,11 @@ export const FileUpload: React.FC = () => {
             ratios: row.ratios || {},
             alerts: row.alerts || [],
             measuredAt: measuredAt,
-            createdAt: serverTimestamp(), 
+            createdAt: serverTimestamp(),
             data: { wavelengths: row.wavelengths, absorbance: row.absorbance },
             images: {},
             metadata: finalMetadata,
+            ...(activeProtocol?.id ? { protocolId: activeProtocol.id } : {}),
           };
 
           const docRef = doc(collection(db, 'samples'));
@@ -171,24 +222,67 @@ export const FileUpload: React.FC = () => {
       });
 
       await Promise.all(imageUploadPromises);
-      
+
       alert('File uploaded and parsed successfully!');
     } catch (error) {
       console.error('Error uploading file:', error);
       alert('Failed to upload file.');
     } finally {
       setUploading(false);
-      if (event.target) event.target.value = '';
     }
   };
 
+  const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(event.target.files || []);
+    event.target.value = '';
+    await processFiles(files);
+  };
+
+  const handleDrop = async (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    setIsDragging(false);
+    const files = Array.from(e.dataTransfer.files);
+    await processFiles(files);
+  };
+
+  const activeProtocol = protocols.find(p => p.id === selectedProtocolId);
+
   return (
-    <div className="space-y-4">
-      <div className="p-8 border-2 border-dashed border-blue-200 rounded-xl bg-blue-50/50 hover:bg-blue-50 transition-colors text-center">
+    <div className="space-y-3">
+      {protocols.length > 0 && (
+        <div className="flex items-center gap-2">
+          <FlaskConical className="h-4 w-4 shrink-0 text-slate-400" />
+          <select
+            value={selectedProtocolId}
+            onChange={e => setSelectedProtocolId(e.target.value)}
+            className="flex-1 px-3 py-1.5 border rounded-lg text-sm bg-white outline-none font-medium"
+          >
+            <option value="">No protocol</option>
+            {protocols.map(p => (
+              <option key={p.id} value={p.id}>{p.name}</option>
+            ))}
+          </select>
+        </div>
+      )}
+      {activeProtocol?.operatorNotes && (
+        <div className="px-3 py-2 bg-amber-50 border border-amber-200 rounded-lg text-xs text-amber-800">
+          <span className="font-bold">Protocol note: </span>{activeProtocol.operatorNotes}
+        </div>
+      )}
+      <div
+        className={`p-8 border-2 border-dashed rounded-xl transition-all text-center ${
+          isDragging
+            ? 'border-blue-400 bg-blue-100 scale-[1.01]'
+            : 'border-blue-200 bg-blue-50/50 hover:bg-blue-50'
+        }`}
+        onDragOver={e => { e.preventDefault(); setIsDragging(true); }}
+        onDragLeave={e => { if (!e.currentTarget.contains(e.relatedTarget as Node)) setIsDragging(false); }}
+        onDrop={handleDrop}
+      >
         <label className="cursor-pointer block">
-          <div className="space-y-2">
+          <div className="space-y-2 pointer-events-none">
             <div className="text-lg font-medium" style={{ color: BRAND_COLOR }}>
-              {uploading ? 'Processing Data...' : 'Upload Data'}
+              {uploading ? 'Processing Data…' : isDragging ? 'Drop to upload' : 'Upload Data'}
             </div>
             <p className="text-sm" style={{ color: BRAND_COLOR, opacity: 0.7 }}>
               Drag & drop or click to upload .csv, .xls, .xlsx or images

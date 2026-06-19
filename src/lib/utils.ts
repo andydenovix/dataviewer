@@ -10,9 +10,14 @@ export const convertFirestoreTimestampToDate = (timestamp: Date | { seconds: num
   return null; // Or throw an error, depending on desired error handling
 };
 
-// Helper to handle numeric strings with commas like "1,526.844"
-export const parseScientificNum = (val: any): number => {
-  if (typeof val === 'number') return val;
-  if (typeof val === 'string') return parseFloat(val.replace(/,/g, ''));
-  return 0;
+// Helper to handle numeric strings with commas like "1,526.844".
+// Returns null when the value is missing or unparseable so callers can
+// distinguish "zero" from "not present".
+export const parseScientificNum = (val: any): number | null => {
+  if (typeof val === 'number') return isNaN(val) ? null : val;
+  if (typeof val === 'string') {
+    const n = parseFloat(val.replace(/,/g, ''));
+    return isNaN(n) ? null : n;
+  }
+  return null;
 };

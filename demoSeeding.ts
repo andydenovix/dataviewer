@@ -4,7 +4,7 @@ import {
   addDoc, 
   serverTimestamp 
 } from 'firebase/firestore';
-import { createProject } from './projectService';
+import { createProject } from './src/lib/projectService';
 
 /**
  * Seeds the database with demo projects and samples for testing.

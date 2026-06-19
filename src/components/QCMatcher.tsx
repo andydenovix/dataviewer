@@ -114,7 +114,7 @@ export const QCMatcher: React.FC<QCMatcherProps> = ({
               <Beaker className="h-6 w-6" />
             </div>
             <div>
-              <h2 className="text-xl font-bold text-slate-800">Method Pairing</h2>
+              <h2 className="text-xl font-bold text-slate-800">SmartQC</h2>
               <p className="text-xs text-slate-500 font-medium">Verify Absorbance results against Fluorescence quantification</p>
             </div>
           </div>

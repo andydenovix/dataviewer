@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useMemo, useEffect, useRef } from 'react';
+import React, { useState, useMemo, useEffect, useRef, useCallback } from 'react';
 import { LabSample } from '../types';
 import { Eye, EyeOff, CheckSquare, Square, Printer } from 'lucide-react';
 import { parseScientificNum } from '../lib/utils';
@@ -12,7 +12,9 @@ interface SpectralPlotProps {
 
 export const SpectralPlot: React.FC<SpectralPlotProps> = ({ samples }) => {
   const [averageMode, setAverageMode] = useState(false);
-  const plotDivRef = useRef<HTMLDivElement>(null); 
+  const plotDivRef = useRef<HTMLDivElement>(null);
+  const plotlyRef = useRef<any>(null);
+  const hasInitialized = useRef(false);
 
   const spectralSamples = useMemo(() => 
     samples.filter(s => s.sampleType !== 'image' && s.data && s.data.wavelengths?.length > 0), 
@@ -204,14 +206,15 @@ export const SpectralPlot: React.FC<SpectralPlotProps> = ({ samples }) => {
     // Base layout without a secondary axis
     const layout: any = {
       autosize: true,
-      title: { 
-        text: averageMode ? 'Averaged Analytical Data' : 'Sample Visualization', 
-        font: { size: 18, color: '#1e293b' } 
+      uirevision: 'preserve', // keeps zoom/pan when data updates via Plotly.react
+      title: {
+        text: averageMode ? 'Averaged Analytical Data' : 'Sample Visualization',
+        font: { size: 18, color: '#1e293b' }
       },
       xaxis: { title: xTitle, gridcolor: '#f1f5f9', zeroline: false },
-      yaxis: { 
-        title: yTitle, 
-        gridcolor: '#f1f5f9', 
+      yaxis: {
+        title: yTitle,
+        gridcolor: '#f1f5f9',
         zeroline: false,
         side: 'left'
       },
@@ -238,19 +241,27 @@ export const SpectralPlot: React.FC<SpectralPlotProps> = ({ samples }) => {
 
   useEffect(() => {
     let isMounted = true;
-    let Plotly: any;
 
     const renderPlot = async () => {
       if (!plotDivRef.current || plotData.length === 0) return;
 
       try {
-        Plotly = (await import('plotly.js')).default;
-        
-        if (isMounted && plotDivRef.current) {
-          Plotly.newPlot(plotDivRef.current, plotData, plotLayout, { 
-            responsive: true, 
-            displaylogo: false 
+        if (!plotlyRef.current) {
+          plotlyRef.current = (await import('plotly.js')).default;
+        }
+        const Plotly = plotlyRef.current;
+
+        if (!isMounted || !plotDivRef.current) return;
+
+        if (hasInitialized.current) {
+          // react() updates data without resetting zoom/pan
+          Plotly.react(plotDivRef.current, plotData, plotLayout);
+        } else {
+          Plotly.newPlot(plotDivRef.current, plotData, plotLayout, {
+            responsive: true,
+            displaylogo: false,
           });
+          hasInitialized.current = true;
         }
       } catch (error) {
         console.error("Failed to load or render Plotly:", error);
@@ -261,11 +272,17 @@ export const SpectralPlot: React.FC<SpectralPlotProps> = ({ samples }) => {
 
     return () => {
       isMounted = false;
-      if (plotDivRef.current && Plotly) {
-        Plotly.purge(plotDivRef.current);
-      }
     };
   }, [plotData, plotLayout]);
+
+  // Purge only on unmount
+  useEffect(() => {
+    return () => {
+      if (plotDivRef.current && plotlyRef.current) {
+        plotlyRef.current.purge(plotDivRef.current);
+      }
+    };
+  }, []);
 
   if (spectralSamples.length === 0) {
     return (

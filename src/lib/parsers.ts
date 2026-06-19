@@ -22,8 +22,15 @@ const HEADER_ALIASES: Record<string, string[]> = {
 
 const getNormalizedKey = (header: string): string | null => {
   const trimmed = header.trim();
+  // Exact alias match (case-insensitive)
   for (const [key, aliases] of Object.entries(HEADER_ALIASES)) {
     if (aliases.some(alias => alias.toLowerCase() === trimmed.toLowerCase())) return key;
+  }
+  // Fuzzy fallback: strip non-alphanumeric and compare — handles "Conc." vs "Conc",
+  // "%Viability" vs "% Viability", "SampleName" vs "Sample Name", etc.
+  const normalized = trimmed.toLowerCase().replace(/[^a-z0-9]/g, '');
+  for (const [key, aliases] of Object.entries(HEADER_ALIASES)) {
+    if (aliases.some(alias => alias.toLowerCase().replace(/[^a-z0-9]/g, '') === normalized)) return key;
   }
   return null;
 };

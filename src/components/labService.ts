@@ -1,12 +1,12 @@
-import { 
-  collection, 
-  addDoc, 
-  updateDoc, 
-  doc, 
+import {
+  collection,
+  addDoc,
+  updateDoc,
+  doc,
   getDoc,
-  query, 
-  where, 
-  getDocs, 
+  query,
+  where,
+  getDocs,
   serverTimestamp,
   writeBatch,
   orderBy,
@@ -14,13 +14,15 @@ import {
   arrayUnion
 } from 'firebase/firestore';
 import { db } from '../lib/firebase';
+import { QCProfile } from '../types';
 
 export interface Lab {
   id: string;
   name: string;
   joinCode: string;
   creatorId: string;
-  members: string[]; // User IDs
+  members: string[];
+  qcProfile?: QCProfile;
 }
 
 export async function getUserLabs(userId: string): Promise<Lab[]> {
@@ -94,14 +96,15 @@ export async function shareSamplesWithLab(sampleIds: string[], labId: string, us
   await batch.commit();
 }
 
-export async function addComment(sampleId: string, userId: string, userName: string, text: string) {
-  await addDoc(collection(db, "comments"), {
-    sampleId,
-    userId,
-    userName,
-    text,
-    createdAt: serverTimestamp()
-  });
+export async function markNotificationRead(notifId: string): Promise<void> {
+  await updateDoc(doc(db, 'notifications', notifId), { isRead: true });
+}
+
+export async function markAllNotificationsRead(notifIds: string[]): Promise<void> {
+  if (notifIds.length === 0) return;
+  const batch = writeBatch(db);
+  notifIds.forEach(id => batch.update(doc(db, 'notifications', id), { isRead: true }));
+  await batch.commit();
 }
 
 export function listenToNotifications(userId: string, callback: (notifs: any[]) => void) {
