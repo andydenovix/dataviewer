@@ -187,6 +187,13 @@ export const SampleDashboard: React.FC = () => {
     [rawSamples, pendingDeleteIds]
   );
 
+  // Hub-scoped views passed to analytical workflow modals
+  const isQuantSample = (s: LabSample) => s.sampleType !== 'cell-count';
+  const isCellSample  = (s: LabSample) => s.sampleType === 'cell-count';
+  const hubFilter = activeHub === 'quant' ? isQuantSample : isCellSample;
+  const hubSamples    = useMemo(() => samples.filter(hubFilter),    [samples, activeHub]);
+  const hubRawSamples = useMemo(() => rawSamples.filter(hubFilter), [rawSamples, activeHub]);
+
   // --- Selection & editing ---
   const [selectedSampleIds, setSelectedSampleIds] = useState<string[]>([]);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -450,7 +457,7 @@ export const SampleDashboard: React.FC = () => {
   if (modals.activeModal === 'replicates')
     return (
       <ErrorBoundary>
-        <ReplicateManager samples={samples} onClose={modals.closeAll} />
+        <ReplicateManager samples={hubSamples} onClose={modals.closeAll} />
       </ErrorBoundary>
     );
 
@@ -458,7 +465,7 @@ export const SampleDashboard: React.FC = () => {
     return (
       <ErrorBoundary>
         <QCMatcher
-          samples={samples}
+          samples={hubSamples}
           initialSelectedIds={selectedSampleIds}
           onClose={modals.closeAll}
           onViewQC={(s, f) => modals.openQCPair({ spectro: s, fluor: f })}
@@ -1182,11 +1189,11 @@ export const SampleDashboard: React.FC = () => {
       )}
 
       {modals.activeModal === 'trend' && (
-        <TrendChart samples={rawSamples} onClose={modals.closeAll} />
+        <TrendChart samples={hubRawSamples} onClose={modals.closeAll} />
       )}
 
       {modals.activeModal === 'leveyJennings' && (
-        <LeveyJenningsChart samples={rawSamples} onClose={modals.closeAll} />
+        <LeveyJenningsChart samples={hubRawSamples} onClose={modals.closeAll} />
       )}
 
       {modals.activeModal === 'protocol' && user && (
@@ -1194,13 +1201,13 @@ export const SampleDashboard: React.FC = () => {
       )}
 
       {modals.activeModal === 'batchReport' && (
-        <BatchReportModal samples={rawSamples} protocols={protocols} onClose={modals.closeAll} />
+        <BatchReportModal samples={hubRawSamples} protocols={protocols} onClose={modals.closeAll} />
       )}
 
       {modals.activeModal === 'spectralFingerprint' && user && (
         <SpectralFingerprintPanel
           userId={user.uid}
-          samples={rawSamples}
+          samples={hubRawSamples}
           referenceSpectra={referenceSpectra}
           onClose={modals.closeAll}
         />
