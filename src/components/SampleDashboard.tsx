@@ -121,7 +121,7 @@ function DashboardSkeleton() {
   );
 }
 
-function EmptyState() {
+function EmptyState({ onLoadDemo, isDemoLoading }: { onLoadDemo: () => void; isDemoLoading: boolean }) {
   return (
     <div className="w-full min-h-[55vh] flex items-center justify-center py-16">
       <div className="text-center max-w-sm mx-auto">
@@ -139,6 +139,21 @@ function EmptyState() {
         <div className="max-w-xs mx-auto">
           <FileUpload />
         </div>
+        <div className="mt-6 flex items-center gap-3">
+          <div className="flex-1 h-px bg-slate-200" />
+          <span className="text-xs text-slate-400 font-medium">or</span>
+          <div className="flex-1 h-px bg-slate-200" />
+        </div>
+        <button
+          onClick={onLoadDemo}
+          disabled={isDemoLoading}
+          className="mt-5 inline-flex items-center gap-2 px-5 py-2.5 rounded-xl border text-sm font-bold transition-all hover:bg-violet-50 disabled:opacity-50"
+          style={{ color: '#7c3aed', borderColor: '#c4b5fd', backgroundColor: '#f5f3ff' }}
+        >
+          <PlayCircle className="h-4 w-4" />
+          {isDemoLoading ? 'Loading demo…' : 'Explore with Demo Data'}
+        </button>
+        <p className="mt-2 text-[11px] text-slate-400">45 sample records across 3 protocols — removable any time</p>
       </div>
     </div>
   );
@@ -430,7 +445,7 @@ export const SampleDashboard: React.FC = () => {
   // --- Render guards ---
   if (loading) return <DashboardSkeleton />;
   if (error) return <div className="text-center p-8 text-red-600">Error: {error}</div>;
-  if (samples.length === 0) return <EmptyState />;
+  if (samples.length === 0) return <EmptyState onLoadDemo={handleLoadDemo} isDemoLoading={isDemoLoading} />;
 
   if (modals.activeModal === 'replicates')
     return (
